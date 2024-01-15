@@ -1,4 +1,4 @@
-# caddy-azure
+![Caddy Logo](caddy.svg)
 
 This is a special build of [Caddy](https://github.com/caddyserver/caddy) with [caddy-dns/azure](https://github.com/caddy-dns/azure) module built in.
 
