@@ -4,7 +4,7 @@ ARG CADDY_VERSION=latest
 FROM caddy:${CADDY_VERSION}-builder AS builder
 
 # install the azure dns plugin
-RUN xcaddy build v${CADDY_VERSION} \
+RUN xcaddy build \
     --with github.com/caddy-dns/azure
 
 # use the final caddy image
