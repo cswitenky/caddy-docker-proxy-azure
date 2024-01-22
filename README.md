@@ -18,4 +18,4 @@ docker run -d -p 80:80 \
     ghcr.io/cswitenky/caddy-azure
 ```
 
-See [Caddy documentation] for more information. Use `ghcr.io/cswitenky/caddy-azure` in place of `caddy`.
+See [Caddy documentation](https://caddyserver.com/docs/install#docker) for more information. Use `ghcr.io/cswitenky/caddy-azure` in place of `caddy`.
