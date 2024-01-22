@@ -67,7 +67,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      # Build Docker image with build.sh script
+      - name: Get latest Caddy version
+        id: get-version
+        run: "::set-output name=version::$(curl --silent "https://api.github.com/repos/caddyserver/caddy/releases/latest" | grep '"tag_name":' | cut -d '"' -f4)"
+        
+        # Build Docker image with build.sh script
       - name: Build Docker image
         id: build
         run: |
@@ -76,6 +80,7 @@ jobs:
 
       # Push Docker image
       - name: Push Docker image
+        needs: get-version
         id: push
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
@@ -87,6 +92,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: CADDY_VERSION=${{ steps.get-version.outputs.version }}
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
