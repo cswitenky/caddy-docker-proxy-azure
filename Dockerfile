@@ -1,9 +1,11 @@
 # set the caddy version as a build argument
 ARG CADDY_VERSION=latest
 
+# build stage
 FROM caddy:${CADDY_VERSION}-builder AS builder
 
-LABEL org.opencontainers.image.description "Caddy with Azure DNS plugin"
+# set the image description
+LABEL org.opencontainers.image.description="Caddy with Azure DNS plugin"
 
 # install the azure dns plugin
 RUN xcaddy build \
