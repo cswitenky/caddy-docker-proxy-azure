@@ -3,6 +3,8 @@ ARG CADDY_VERSION=latest
 
 FROM caddy:${CADDY_VERSION}-builder AS builder
 
+LABEL org.opencontainers.image.description "Caddy with Azure DNS plugin"
+
 # install the azure dns plugin
 RUN xcaddy build \
     --with github.com/caddy-dns/azure
