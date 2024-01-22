@@ -59,6 +59,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Get latest Caddy version
+      - name: Get latest Caddy version
+        id: get-version
+        run: echo "version=$(curl --silent "https://api.github.com/repos/caddyserver/caddy/releases/latest" | grep '"tag_name":' | cut -d '"' -f4 | tr -d 'v')" >> $GITHUB_OUTPUT
+
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
@@ -68,16 +73,13 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Get latest Caddy version
-        id: get-version
-        run: echo "version=$(curl --silent "https://api.github.com/repos/caddyserver/caddy/releases/latest" | grep '"tag_name":' | cut -d '"' -f4 | tr -d 'v')" >> $GITHUB_OUTPUT
+            type=semver,pattern={{version}},value=${{ steps.get-version.outputs.version }}
 
       # Build and push Docker image
       - name: Build and push Docker image
         id: build-and-push
         if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses: docker/build-push-action@v5.0.0
         with:
           context: .
           pull: true
