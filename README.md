@@ -10,10 +10,12 @@ Read more about Caddy and how to use it on Caddy's [website](https://caddyserver
 
 ## Installation
 
-### Docker
+### Basic usage
+```
+docker run -d -p 80:80 \
+    -v $PWD/index.html:/usr/share/caddy/index.html \
+    -v caddy_data:/data \
+    ghcr.io/cswitenky/caddy-azure
+```
 
-Yet to be written
-
-### docker-compose
-
-Yet to be written
+See [Caddy documentation] for more information. Use `ghcr.io/cswitenky/caddy-azure` in place of `caddy`.
