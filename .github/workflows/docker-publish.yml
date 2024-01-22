@@ -80,7 +80,7 @@ jobs:
           context: .
           pull: true
           push: true
-          tags: ${{ env.REGISTRY }}/caddy-azure:${{ steps.get-version.outputs.version }},${{ env.REGISTRY }}/caddy-azure:latest
+          tags: ${{ env.REGISTRY }}/caddy-azure:${{ steps.get-version.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -95,7 +95,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         env:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ env.REGISTRY }}/caddy-azure:${{ steps.get-version.outputs.version }},${{ env.REGISTRY }}/caddy-azure:latest
+          TAGS: ${{ env.REGISTRY }}/caddy-azure:${{ steps.get-version.outputs.version }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
