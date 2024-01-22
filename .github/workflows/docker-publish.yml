@@ -96,6 +96,6 @@ jobs:
         id: delete-old-versions
         with:
           owner: "github"
-          package-name: ${{ env.IMAGE_NAME }}
+          package-name: "caddy-azure"
           package-type: "container"
           min-versions-to-keep: 3
