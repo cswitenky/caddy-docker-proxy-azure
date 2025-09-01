@@ -94,6 +94,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: CADDY_VERSION=${{ steps.get-version.outputs.version }}
 
+      # Clean up old package versions to save storage space
       - uses: actions/delete-package-versions@v5.0.0
         id: delete-old-versions
         with:
