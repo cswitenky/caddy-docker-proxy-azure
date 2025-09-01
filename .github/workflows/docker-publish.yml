@@ -7,7 +7,7 @@ name: Docker
 
 on:
   schedule:
-    - cron: "28 11 * * *"
+    - cron: "0 9 1 * *"  # Monthly on the 1st at 9:00 UTC
   push:
     branches: ["main"]
     # Publish semver tags as releases.
@@ -23,7 +23,9 @@ env:
 
 jobs:
   build:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     permissions:
       contents: read
       packages: write
@@ -99,3 +101,23 @@ jobs:
           package-type: "container"
           min-versions-to-keep: 10
           delete-only-untagged-versions: "true"
+
+  repository-keepalive:
+    name: Repository Keepalive
+    runs-on: ubuntu-latest
+    needs: build
+    if: always() && github.event_name == 'schedule'  # Only run on scheduled runs
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Make keepalive commit
+      run: |
+        git config --local user.email "github@mail.switenky.com"
+        git config --local user.name "Connor Switenky (Automation)"
+        echo "Keepalive commit on $(date)" > keepalive.txt
+        git add keepalive.txt
+        git commit -m "chore: keepalive commit [skip ci]"
+        git push
