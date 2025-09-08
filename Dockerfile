@@ -4,7 +4,14 @@ ARG CADDY_VERSION=latest
 # build stage
 FROM caddy:${CADDY_VERSION}-builder AS builder
 
-# install the azure dns plugin
+# Set Go build environment for cross-compilation
+ARG TARGETOS
+ARG TARGETARCH
+ENV GOOS=$TARGETOS
+ENV GOARCH=$TARGETARCH
+ENV CGO_ENABLED=0
+
+# install the azure dns plugin with optimized build flags
 RUN xcaddy build \
     --with github.com/caddy-dns/azure
 
