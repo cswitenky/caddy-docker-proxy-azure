@@ -1,23 +1,16 @@
-# Dockerfile
+# set the caddy version as a build argument
 ARG CADDY_VERSION=2.7.6
-ARG TARGETOS
-ARG TARGETARCH
 
-# Builder stage
+# build stage
 FROM caddy:${CADDY_VERSION}-builder AS builder
 
-# Set Go build environment for cross-compilation
-ENV GOOS=$TARGETOS
-ENV GOARCH=$TARGETARCH
-ENV CGO_ENABLED=0
-
-# Build Caddy with Azure DNS plugin
+# install the azure dns plugin
 RUN xcaddy build \
     --with github.com/caddy-dns/azure \
     --ldflags="-s -w -trimpath"
 
-# Final stage: slim image
+# use the final caddy image
 FROM caddy:${CADDY_VERSION}
 
-# Copy the compiled binary
+# copy the plugin from the builder stage
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
