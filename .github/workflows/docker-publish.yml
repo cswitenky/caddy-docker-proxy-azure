@@ -1,8 +1,8 @@
-name: Docker
+name: Build & Push Caddy Multi-Arch Image
 
 on:
   schedule:
-    - cron: "0 9 1 * *"  # Monthly on the 1st at 9:00 UTC
+    - cron: "0 9 1 * *" # monthly
   push:
     branches: ["main"]
     tags: ["v*.*.*"]
@@ -15,96 +15,41 @@ env:
 
 jobs:
   build:
-    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.3.0
-        with:
-          cosign-release: "v2.1.1"
+      - name: Get latest Caddy version
+        id: get-version
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/caddyserver/caddy/releases/latest \
+            | grep '"tag_name":' | cut -d '"' -f4 | tr -d 'v')
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.0.0
+        uses: docker/setup-buildx-action@v3
 
-      - name: Log into registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3.0.0
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get latest Caddy version
-        id: get-version
-        run: |
-          echo "version=$(curl --silent "https://api.github.com/repos/caddyserver/caddy/releases/latest" \
-          | grep '"tag_name":' | cut -d '"' -f4 | tr -d 'v')" >> $GITHUB_OUTPUT
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5.5.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}},value=${{ steps.get-version.outputs.version }}
-          labels: |
-            org.opencontainers.image.description=Caddy with Azure DNS plugin
-
-      # Build and push multi-platform image using xcaddy builder
-      - name: Build and push Docker image
-        id: build-and-push
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v5.0.0
-        timeout-minutes: 30
+      - name: Build & Push
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
-          pull: true
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
           build-args: |
             CADDY_VERSION=${{ steps.get-version.outputs.version }}
-
-      - uses: actions/delete-package-versions@v5.0.0
-        id: delete-old-versions
-        with:
-          package-name: "caddy-azure"
-          package-type: "container"
-          min-versions-to-keep: 10
-          delete-only-untagged-versions: "true"
-
-  repository-keepalive:
-    name: Repository Keepalive
-    runs-on: ubuntu-latest
-    needs: build
-    if: always() && github.event_name == 'schedule'
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Make keepalive commit
-        run: |
-          git config --local user.email "github@mail.switenky.com"
-          git config --local user.name "Connor Switenky (Automation)"
-          echo "Keepalive commit on $(date)" > keepalive.txt
-          git add keepalive.txt
-          git commit -m "chore: keepalive commit [skip ci]"
-          git push
+            TARGETOS=linux
+            TARGETARCH=${{ matrix.arch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get-version.outputs.version }}
