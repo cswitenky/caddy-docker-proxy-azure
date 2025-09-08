@@ -1,16 +1,14 @@
-# set the caddy version as a build argument
-ARG CADDY_VERSION=2.7.6
+# Builder with Go
+FROM golang:latest AS builder
 
-# build stage
-FROM caddy:${CADDY_VERSION}-builder AS builder
+RUN apt-get update && apt-get upgrade -y
 
-# install the azure dns plugin
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
 RUN xcaddy build \
     --with github.com/caddy-dns/azure \
-    --ldflags="-s -w -trimpath"
+    --output /caddy
 
-# use the final caddy image
-FROM caddy:${CADDY_VERSION}
-
-# copy the plugin from the builder stage
-COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+# Final slim image
+FROM caddy:alpine
+COPY --from=builder /caddy /usr/bin/caddy
