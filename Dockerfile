@@ -1,14 +1,12 @@
-# Builder with Go
-FROM golang:latest AS builder
-
-RUN apt-get update && apt-get upgrade -y
-
-RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+ARG CADDY_VERSION=2.6.1
+FROM caddy:${CADDY_VERSION}-builder AS builder
 
 RUN xcaddy build \
-    --with github.com/caddy-dns/azure \
-    --output /caddy
+    --with github.com/lucaslorentz/caddy-docker-proxy/v2 \
+    --with github.com/caddy-dns/azure
 
-# Final slim image
-FROM caddy:alpine
-COPY --from=builder /caddy /usr/bin/caddy
+FROM caddy:${CADDY_VERSION}-alpine
+
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+
+CMD ["caddy", "docker-proxy"]
